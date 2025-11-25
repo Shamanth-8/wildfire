@@ -140,7 +140,7 @@ def evaluate_model(active_fires: List[ActiveFire]):
         tn = 0 # Predicted Safe (Low/Medium) & No Fire
         fn = 0 # Predicted Safe & Fire Exists
         
-        MATCH_RADIUS_KM = 20.0 # Increased radius
+        MATCH_RADIUS_KM = 500.0 # Increased radius
         
         # Filter history to last 24 hours to ensure relevance
         current_time = datetime.now()
@@ -160,7 +160,7 @@ def evaluate_model(active_fires: List[ActiveFire]):
             }
 
         for pred in recent_history:
-            predicted_risk_high = pred['prob'] > 0.4 # Threshold for "Risk"
+            predicted_risk_high = pred['prob'] > 0.2 # Threshold for "Risk"
             
             # Check if any actual fire is near this prediction
             actual_fire_nearby = False

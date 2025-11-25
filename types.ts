@@ -1,13 +1,13 @@
 
 export interface LatLon {
-  lat: number;
-  lng: number;
+    lat: number;
+    lng: number;
 }
 
 export interface ActiveFire {
     lat: number;
     lon: number;
-    brightness: number; 
+    brightness: number;
     acq_date: string;
 }
 
@@ -40,4 +40,16 @@ export interface AnalyzedHotspot {
     fireData: ActiveFire;
     envData: WildfireInputData;
     prediction?: PredictionResult;
+}
+
+export interface TimelineDataPoint {
+    date: string; // ISO date string or formatted date
+    riskScore: number;
+    riskLevel: RiskLevel;
+    temperature: number;
+    humidity: number;
+    windSpeed: number;
+    rainfall: number;
+    isProjected: boolean; // true for future dates
+    confidence: number; // 0-100 score indicating prediction reliability
 }

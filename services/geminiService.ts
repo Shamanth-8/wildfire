@@ -26,49 +26,49 @@ export const fetchWildfirePrediction = async (data: WildfireInputData, lat?: num
   try {
     // 1. Try to get prediction from local XGBoost API
     try {
-        const response = await fetch('http://localhost:8000/predict', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                lat: lat || 0,
-                lon: lon || 0,
-                temperature: data.temperature,
-                humidity: data.humidity,
-                wind_speed: data.windSpeed,
-                rainfall: data.rainfall,
-                ndvi: data.ndvi,
-                elevation: data.elevation
-            }),
-        });
+      const response = await fetch('http://localhost:8000/predict', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          lat: lat || 0,
+          lon: lon || 0,
+          temperature: data.temperature,
+          humidity: data.humidity,
+          wind_speed: data.windSpeed,
+          rainfall: data.rainfall,
+          ndvi: data.ndvi,
+          elevation: data.elevation
+        }),
+      });
 
-        if (response.ok) {
-            const result = await response.json();
-            
-            // Map string risk to Enum
-            let riskLevel = RiskLevel.Low;
-            if (result.risk_level === "Extreme") riskLevel = RiskLevel.Extreme;
-            else if (result.risk_level === "High") riskLevel = RiskLevel.High;
-            else if (result.risk_level === "Medium") riskLevel = RiskLevel.Medium;
+      if (response.ok) {
+        const result = await response.json();
 
-            return {
-                riskLevel,
-                explanation: `XGBoost Model Prediction: ${(result.fire_probability * 100).toFixed(2)}% probability. Risk Level: ${result.risk_level}. (Temp: ${data.temperature.toFixed(1)}°C, Wind: ${data.windSpeed.toFixed(1)}km/h)`,
-                source: 'XGBoost'
-            };
-        }
+        // Map string risk to Enum
+        let riskLevel = RiskLevel.Low;
+        if (result.risk_level === "Extreme") riskLevel = RiskLevel.Extreme;
+        else if (result.risk_level === "High") riskLevel = RiskLevel.High;
+        else if (result.risk_level === "Medium") riskLevel = RiskLevel.Medium;
+
+        return {
+          riskLevel,
+          explanation: `XGBoost Model Prediction: ${(result.fire_probability * 100).toFixed(2)}% probability. Risk Level: ${result.risk_level}. (Temp: ${data.temperature.toFixed(1)}°C, Wind: ${data.windSpeed.toFixed(1)}km/h)`,
+          source: 'XGBoost'
+        };
+      }
     } catch (apiError) {
-        console.warn("Local XGBoost API unavailable, falling back to heuristic/Gemini...", apiError);
+      console.warn("Local XGBoost API unavailable, falling back to heuristic/Gemini...", apiError);
     }
 
     // 2. Fallback to original logic if API fails
     // Fetch active fire data from NASA FIRMS API
     const fireData = await fetchActiveFires();
-    
+
     let nearbyFireCount = 0;
     let nearestFireDistance = Infinity;
-    
+
     // If coordinates provided, calculate proximity to fires
     if (lat !== undefined && lon !== undefined) {
       fireData.forEach(fire => {
@@ -81,11 +81,11 @@ export const fetchWildfirePrediction = async (data: WildfireInputData, lat?: num
         }
       });
     }
-    
+
     // Calculate risk score based on environmental factors
     let riskScore = 0;
     const factors: string[] = [];
-    
+
     // Temperature factor (higher temp = higher risk)
     if (data.temperature > 35) {
       riskScore += 3;
@@ -94,7 +94,7 @@ export const fetchWildfirePrediction = async (data: WildfireInputData, lat?: num
       riskScore += 2;
       factors.push('high temperature');
     }
-    
+
     // Humidity factor (lower humidity = higher risk)
     if (data.humidity < 30) {
       riskScore += 3;
@@ -103,7 +103,7 @@ export const fetchWildfirePrediction = async (data: WildfireInputData, lat?: num
       riskScore += 1;
       factors.push('moderate humidity');
     }
-    
+
     // Wind speed factor (higher wind = higher risk)
     if (data.windSpeed > 25) {
       riskScore += 2;
@@ -112,13 +112,13 @@ export const fetchWildfirePrediction = async (data: WildfireInputData, lat?: num
       riskScore += 1;
       factors.push('moderate winds');
     }
-    
+
     // Rainfall factor (less rain = higher risk)
     if (data.rainfall < 2) {
       riskScore += 2;
       factors.push('dry conditions');
     }
-    
+
     // Vegetation factor (higher NDVI = more fuel)
     if (data.ndvi > 0.6) {
       riskScore += 2;
@@ -126,19 +126,19 @@ export const fetchWildfirePrediction = async (data: WildfireInputData, lat?: num
     } else if (data.ndvi > 0.4) {
       riskScore += 1;
     }
-    
+
     // Slope factor (steeper = faster spread)
     if (data.slope > 20) {
       riskScore += 1;
       factors.push('steep terrain');
     }
-    
+
     // Nearby fires factor
     if (nearbyFireCount > 0) {
       riskScore += 3;
       factors.push(`${nearbyFireCount} active fire(s) within 100km`);
     }
-    
+
     // Determine risk level based on score
     let riskLevel: RiskLevel;
     if (riskScore >= 10) {
@@ -150,20 +150,20 @@ export const fetchWildfirePrediction = async (data: WildfireInputData, lat?: num
     } else {
       riskLevel = RiskLevel.Low;
     }
-    
+
     // Generate explanation
     let explanation = `Risk assessment for ${data.locationName}: `;
-    
+
     if (nearbyFireCount > 0) {
       explanation += `${nearbyFireCount} active fire(s) detected within 100km (nearest: ${nearestFireDistance.toFixed(1)}km). `;
     } else {
       explanation += `No active fires detected within 100km. `;
     }
-    
+
     if (factors.length > 0) {
       explanation += `Risk factors: ${factors.join(', ')}. `;
     }
-    
+
     explanation += `Environmental conditions: ${data.temperature.toFixed(1)}°C, ${data.humidity.toFixed(0)}% humidity, ${data.windSpeed.toFixed(1)} km/h winds, ${data.rainfall.toFixed(1)}mm rain.`;
 
     return {
@@ -175,6 +175,145 @@ export const fetchWildfirePrediction = async (data: WildfireInputData, lat?: num
     throw new Error('Failed to get prediction from NASA FIRMS API.');
   }
 };
+
+// Helper to calculate risk score (extracted for reuse)
+export const calculateRiskScore = (data: WildfireInputData, nearbyFireCount: number = 0): { riskLevel: RiskLevel, riskScore: number } => {
+  let riskScore = 0;
+
+  // Temperature factor
+  if (data.temperature > 35) riskScore += 3;
+  else if (data.temperature > 30) riskScore += 2;
+
+  // Humidity factor
+  if (data.humidity < 30) riskScore += 3;
+  else if (data.humidity < 50) riskScore += 1;
+
+  // Wind speed factor
+  if (data.windSpeed > 25) riskScore += 2;
+  else if (data.windSpeed > 15) riskScore += 1;
+
+  // Rainfall factor
+  if (data.rainfall < 2) riskScore += 2;
+
+  // Vegetation factor
+  if (data.ndvi > 0.6) riskScore += 2;
+  else if (data.ndvi > 0.4) riskScore += 1;
+
+  // Slope factor
+  if (data.slope > 20) riskScore += 1;
+
+  // Nearby fires factor
+  if (nearbyFireCount > 0) riskScore += 3;
+
+  let riskLevel: RiskLevel;
+  if (riskScore >= 10) riskLevel = RiskLevel.Extreme;
+  else if (riskScore >= 7) riskLevel = RiskLevel.High;
+  else if (riskScore >= 4) riskLevel = RiskLevel.Medium;
+  else riskLevel = RiskLevel.Low;
+
+  return { riskLevel, riskScore };
+};
+
+import { TimelineDataPoint } from '../types';
+import { subYears, addYears, format, eachMonthOfInterval, startOfMonth, subMonths } from 'date-fns';
+
+export const fetchTimelineData = async (lat: number, lon: number): Promise<TimelineDataPoint[]> => {
+  const today = new Date();
+  const oneYearAgo = subYears(today, 1);
+
+  // Generate dates for the last year (monthly intervals)
+  const pastDates = eachMonthOfInterval({
+    start: oneYearAgo,
+    end: today
+  });
+
+  const timelineData: TimelineDataPoint[] = [];
+
+  // Fetch historical data from Open-Meteo Archive
+  // Note: Open-Meteo Archive requires start_date and end_date
+  const startDateStr = format(oneYearAgo, 'yyyy-MM-dd');
+  const endDateStr = format(today, 'yyyy-MM-dd');
+
+  try {
+    const archiveUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${startDateStr}&end_date=${endDateStr}&daily=temperature_2m_max,relative_humidity_2m_mean,wind_speed_10m_max,rain_sum&timezone=auto`;
+
+    const response = await fetch(archiveUrl);
+    if (!response.ok) throw new Error('Failed to fetch historical data');
+
+    const data = await response.json();
+    const daily = data.daily;
+
+    // Process daily data into monthly averages/points
+    // For simplicity, we'll take one point per month (e.g., the 15th or average)
+    // Since we have daily data, let's map our monthly intervals to the closest daily data
+
+    pastDates.forEach(date => {
+      const dateStr = format(date, 'yyyy-MM-dd');
+      const index = daily.time.indexOf(dateStr);
+
+      if (index !== -1) {
+        const temp = daily.temperature_2m_max[index];
+        const humidity = daily.relative_humidity_2m_mean[index];
+        const wind = daily.wind_speed_10m_max[index];
+        const rain = daily.rain_sum[index];
+
+        // Mock static factors for historical data
+        const mockInput: WildfireInputData = {
+          locationName: 'Historical',
+          temperature: temp,
+          humidity: humidity,
+          windSpeed: wind,
+          rainfall: rain,
+          ndvi: 0.5, // Assumed constant
+          elevation: 100, // Assumed constant
+          slope: 5 // Assumed constant
+        };
+
+        const { riskLevel, riskScore } = calculateRiskScore(mockInput);
+
+        timelineData.push({
+          date: dateStr,
+          riskScore,
+          riskLevel,
+          temperature: temp,
+          humidity: humidity,
+          windSpeed: wind,
+          rainfall: rain,
+          isProjected: false,
+          confidence: 100 // Historical data is 100% accurate
+        });
+      }
+    });
+
+    // Generate Future Data (Projection)
+    // We use the past year's data as a proxy for the next year
+    const futureData = timelineData.map(point => {
+      const futureDate = addYears(parseISO(point.date), 1);
+
+      // Calculate confidence for future data
+      // Base confidence 85%, reduced by high wind variability or extreme conditions
+      let confidence = 85;
+      if (point.windSpeed > 20) confidence -= 5; // High wind makes prediction harder
+      if (point.temperature > 35) confidence -= 3; // Extreme heat makes prediction harder
+
+      return {
+        ...point,
+        date: format(futureDate, 'yyyy-MM-dd'),
+        isProjected: true,
+        confidence: Math.max(50, confidence) // Minimum confidence 50%
+      };
+    });
+
+    // Combine and sort
+    return [...timelineData, ...futureData].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  } catch (error) {
+    console.error("Error fetching timeline data:", error);
+    return [];
+  }
+};
+
+import { parseISO } from 'date-fns';
 
 const createEnvironmentDataPrompt = (lat: number, lon: number): string => {
   return `
@@ -218,14 +357,14 @@ export const fetchEnvironmentalDataForCoords = async (lat: number, lon: number, 
   try {
     // Get location name (use provided name or reverse geocode)
     const locationName = name || await getLocationName(lat, lon);
-    
+
     // Fetch real-time weather data from Open-Meteo
     const weatherResponse = await fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,rain,wind_speed_10m&forecast_days=1`
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,rain,wind_speed_10m&forecast_days=1`
     );
-    
+
     if (!weatherResponse.ok) {
-        throw new Error("Failed to fetch weather data");
+      throw new Error("Failed to fetch weather data");
     }
 
     const weatherData = await weatherResponse.json();
@@ -239,10 +378,10 @@ export const fetchEnvironmentalDataForCoords = async (lat: number, lon: number, 
 
     // NDVI and Slope are not in standard weather APIs, so we estimate or keep mock for now
     // In a real production app, you'd use a satellite API (e.g., Sentinel Hub) for NDVI
-    const ndvi = Math.max(0, Math.min(1, 0.5 + (Math.random() * 0.2 - 0.1))); 
+    const ndvi = Math.max(0, Math.min(1, 0.5 + (Math.random() * 0.2 - 0.1)));
     const elevation = Math.max(0, Math.abs(lat) * 10 + Math.random() * 100); // Rough estimate
     const slope = Math.max(0, Math.random() * 20); // Rough estimate
-    
+
     return {
       locationName,
       temperature,
@@ -259,14 +398,14 @@ export const fetchEnvironmentalDataForCoords = async (lat: number, lon: number, 
     // Fallback to estimates if API fails
     const baseTemp = 35 - (Math.abs(lat) / 90) * 50;
     return {
-        locationName: name || `${lat.toFixed(2)}, ${lon.toFixed(2)}`,
-        temperature: baseTemp,
-        humidity: 50,
-        windSpeed: 10,
-        rainfall: 0,
-        ndvi: 0.5,
-        elevation: 100,
-        slope: 5
+      locationName: name || `${lat.toFixed(2)}, ${lon.toFixed(2)}`,
+      temperature: baseTemp,
+      humidity: 50,
+      windSpeed: 10,
+      rainfall: 0,
+      ndvi: 0.5,
+      elevation: 100,
+      slope: 5
     };
   }
 };
@@ -276,7 +415,7 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   const R = 6371; // Earth's radius in km
   const dLat = toRad(lat2 - lat1);
   const dLon = toRad(lon2 - lon1);
-  const a = 
+  const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
     Math.sin(dLon / 2) * Math.sin(dLon / 2);
@@ -289,27 +428,27 @@ function toRad(degrees: number): number {
 }
 
 export interface EvaluationMetrics {
-    accuracy: number;
-    precision: number;
-    recall: number;
-    total_predictions: number;
-    correct_predictions: number;
+  accuracy: number;
+  precision: number;
+  recall: number;
+  total_predictions: number;
+  correct_predictions: number;
 }
 
 export const evaluateModel = async (activeFires: ActiveFire[]): Promise<EvaluationMetrics | null> => {
-    try {
-        const response = await fetch('http://localhost:8000/evaluate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(activeFires.map(f => ({ lat: f.lat, lon: f.lon })))
-        });
-        
-        if (response.ok) {
-            return await response.json();
-        }
-        return null;
-    } catch (error) {
-        console.warn("Failed to evaluate model:", error);
-        return null;
+  try {
+    const response = await fetch('http://localhost:8000/evaluate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(activeFires.map(f => ({ lat: f.lat, lon: f.lon })))
+    });
+
+    if (response.ok) {
+      return await response.json();
     }
+    return null;
+  } catch (error) {
+    console.warn("Failed to evaluate model:", error);
+    return null;
+  }
 };

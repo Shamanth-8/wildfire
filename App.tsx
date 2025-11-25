@@ -6,7 +6,7 @@ import { fetchEnvironmentalDataForCoords, fetchWildfirePrediction } from './serv
 import GlobeComponent from './components/GlobeComponent';
 import RiskResultDisplay from './components/RiskResultDisplay';
 import CoordinateInput from './components/CoordinateInput';
-import ModelAccuracyDisplay from './components/ModelAccuracyDisplay';
+
 import AnalysisOverlay from './components/AnalysisOverlay';
 import { evaluateModel, EvaluationMetrics } from './services/geminiService';
 
@@ -23,7 +23,7 @@ function App() {
   const [customPrediction, setCustomPrediction] = useState<AnalyzedHotspot | null>(null);
   const [isAnalyzingCustom, setIsAnalyzingCustom] = useState<boolean>(false);
   const [accuracyMetrics, setAccuracyMetrics] = useState<EvaluationMetrics | null>(null);
-  
+
   const analysisInProgress = useRef(false);
 
   const runAnalysis = useCallback(async () => {
@@ -51,9 +51,9 @@ function App() {
           return null; // Ignore hotspots that fail analysis
         }
       });
-      
+
       const results = (await Promise.all(analysisPromises)).filter(Boolean) as AnalyzedHotspot[];
-      
+
       const sortedResults = results.sort((a, b) => {
         const riskOrder = [RiskLevel.Extreme, RiskLevel.High, RiskLevel.Medium, RiskLevel.Low];
         return riskOrder.indexOf(a.prediction!.riskLevel) - riskOrder.indexOf(b.prediction!.riskLevel);
@@ -88,14 +88,14 @@ function App() {
       const id = `custom_${lat.toFixed(4)}_${lon.toFixed(4)}`;
       const envData = await fetchEnvironmentalDataForCoords(lat, lon, name);
       const prediction = await fetchWildfirePrediction(envData, lat, lon);
-      
+
       const customHotspot: AnalyzedHotspot = {
         id,
         fireData: { lat, lon, brightness: 0, acq_date: new Date().toISOString() },
         envData,
         prediction
       };
-      
+
       setCustomPrediction(customHotspot);
       setFocusedHotspot(customHotspot);
 
@@ -129,21 +129,21 @@ function App() {
             Predictive Risk Assessment Agent
           </p>
         </header>
-        
+
         <div className="px-6 py-3 flex justify-between items-center border-b border-white/5 bg-slate-900/30">
-            <div className='text-xs font-medium text-slate-400 flex items-center gap-2'>
-                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                {isLoading ? "Syncing with NASA..." : `Updated: ${lastUpdated?.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) || 'N/A'}`}
-            </div>
-            <button onClick={runAnalysis} disabled={isLoading} className="text-xs font-semibold text-blue-400 hover:text-blue-300 disabled:text-slate-600 disabled:cursor-not-allowed flex items-center gap-1.5 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 110 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
-                </svg>
-                Refresh Data
-            </button>
+          <div className='text-xs font-medium text-slate-400 flex items-center gap-2'>
+            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+            {isLoading ? "Syncing with NASA..." : `Updated: ${lastUpdated?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || 'N/A'}`}
+          </div>
+          <button onClick={runAnalysis} disabled={isLoading} className="text-xs font-semibold text-blue-400 hover:text-blue-300 disabled:text-slate-600 disabled:cursor-not-allowed flex items-center gap-1.5 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 110 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+            </svg>
+            Refresh Data
+          </button>
         </div>
-        
-        <CoordinateInput 
+
+        <CoordinateInput
           onAnalyze={analyzeCustomLocation}
           isAnalyzing={isAnalyzingCustom}
         />
@@ -151,27 +151,28 @@ function App() {
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
           {isLoading && analyzedHotspots.length === 0 && (
             <div className="text-center text-gray-400 py-10">
-                <svg className="animate-spin h-8 w-8 text-white mx-auto mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8-0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Analyzing global fire data...
+              <svg className="animate-spin h-8 w-8 text-white mx-auto mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8-0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Analyzing global fire data...
             </div>
           )}
           {!isLoading && error && (
             <div className="bg-red-900/50 border border-red-700 text-red-200 p-4 rounded-lg" role="alert">
-                <strong className="font-bold">Analysis Failed: </strong>
-                <span>{error}</span>
+              <strong className="font-bold">Analysis Failed: </strong>
+              <span>{error}</span>
             </div>
           )}
           {customPrediction && (
             <div>
               <h3 className="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wide">Custom Analysis</h3>
-              <RiskResultDisplay 
+              <RiskResultDisplay
                 key={customPrediction.id}
                 hotspot={customPrediction}
                 onSelect={() => setFocusedHotspot(customPrediction)}
                 isSelected={focusedHotspot?.id === customPrediction.id}
+                metrics={accuracyMetrics}
               />
             </div>
           )}
@@ -179,7 +180,7 @@ function App() {
             <h3 className="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wide pt-2 border-t border-gray-700">Active Hotspots</h3>
           )}
           {analyzedHotspots.map(hotspot => (
-            <RiskResultDisplay 
+            <RiskResultDisplay
               key={hotspot.id}
               hotspot={hotspot}
               onSelect={() => setFocusedHotspot(hotspot)}
@@ -187,26 +188,26 @@ function App() {
             />
           ))}
         </div>
-        
-        <ModelAccuracyDisplay metrics={accuracyMetrics} />
+
+
       </aside>
-      
+
       {/* Main Content */}
       <main className="flex-1 relative bg-gray-900">
-        <GlobeComponent 
+        <GlobeComponent
           allActiveFires={allActiveFires}
           analyzedHotspots={analyzedHotspots}
           focusedHotspot={focusedHotspot}
           customPrediction={customPrediction}
           onMapClick={analyzeCustomLocation}
         />
-        
+
         {/* Detailed Analysis Overlay */}
         {focusedHotspot && (
-            <AnalysisOverlay 
-                hotspot={focusedHotspot} 
-                onClose={() => setFocusedHotspot(null)} 
-            />
+          <AnalysisOverlay
+            hotspot={focusedHotspot}
+            onClose={() => setFocusedHotspot(null)}
+          />
         )}
       </main>
     </div>
