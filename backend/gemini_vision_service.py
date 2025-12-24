@@ -22,7 +22,7 @@ def analyze_image_with_key(image_bytes, api_key):
     img_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
     
     # Prepare Gemini API request
-    url = f"https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key={api_key}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
     
     headers = {
         "Content-Type": "application/json"

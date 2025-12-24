@@ -46,3 +46,7 @@ test_image_2.jpg
 
 # Backend startup scripts with environment variables
 backend/start_backend.sh
+# Config file with hardcoded API keys (local only)
+config.ts
+# Chat service with hardcoded API keys (local only)
+services/chatService.ts

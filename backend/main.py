@@ -363,13 +363,29 @@ def login(user: UserLogin):
 async def predict_image(file: UploadFile = File(...)):
     if not VISION_AVAILABLE:
         raise HTTPException(status_code=503, detail="Image analysis is not available. Gemini Vision service is not configured.")
+    
+    # Validate file type
+    allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif']
+    if file.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Invalid file type. Please upload an image file (JPEG, PNG, WebP, or GIF). Received: {file.content_type}"
+        )
+    
     try:
         contents = await file.read()
         result = gemini_vision_service.analyze_image_bytes(contents)
         return result
     except Exception as e:
         print(f"Image analysis error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        error_msg = str(e)
+        # Provide more user-friendly error messages
+        if "cannot identify image file" in error_msg.lower():
+            raise HTTPException(status_code=400, detail="Unable to process the uploaded file. Please ensure it's a valid image file.")
+        elif "quota" in error_msg.lower() or "limit" in error_msg.lower():
+            raise HTTPException(status_code=429, detail="API quota exceeded. Please try again later.")
+        else:
+            raise HTTPException(status_code=500, detail=f"Image analysis failed: {error_msg}")
 
 
 if __name__ == "__main__":

@@ -42,7 +42,8 @@ const ImageUploadAnalysis: React.FC = () => {
             });
 
             if (!response.ok) {
-                throw new Error('Analysis failed');
+                const errorData = await response.json().catch(() => ({ detail: 'Analysis failed' }));
+                throw new Error(errorData.detail || 'Analysis failed');
             }
 
             const data = await response.json();
@@ -111,8 +112,8 @@ const ImageUploadAnalysis: React.FC = () => {
 
             {result && (
                 <div className={`p-3 rounded-lg border text-sm ${result.risk_level === 'High'
-                        ? 'bg-red-500/20 border-red-500/30 text-red-200'
-                        : 'bg-green-500/20 border-green-500/30 text-green-200'
+                    ? 'bg-red-500/20 border-red-500/30 text-red-200'
+                    : 'bg-green-500/20 border-green-500/30 text-green-200'
                     }`}>
                     <div className="flex justify-between items-center mb-1">
                         <span className="font-bold uppercase text-[10px]">Risk Level</span>
