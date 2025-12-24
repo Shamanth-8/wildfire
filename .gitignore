@@ -43,3 +43,6 @@ backend/prediction_history.json
 # *.jpg
 test_image.jpg
 test_image_2.jpg
+
+# Backend startup scripts with environment variables
+backend/start_backend.sh
