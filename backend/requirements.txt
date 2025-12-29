@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+xgboost
+pandas
+scikit-learn
+numpy
+pillow
+requests
+python-multipart
+torch
+transformers

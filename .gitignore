@@ -1,0 +1,52 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Environment variables
+# .env
+.env.local
+
+# Python Backend
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+users.json
+*.sqlite3
+
+
+# Large Data & Models
+# dataset/
+# backend/fine_tuned_blip/
+backend/prediction_history.json
+# *.jpg
+test_image.jpg
+test_image_2.jpg
+
+# Backend startup scripts with environment variables
+backend/start_backend.sh
+# Config file with hardcoded API keys (local only)
+# config.ts
+# Chat service with hardcoded API keys (local only)
+# services/chatService.ts
