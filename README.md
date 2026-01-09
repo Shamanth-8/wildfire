@@ -147,10 +147,5 @@ Make sure to set environment variables in your deployment platform.
 
 MIT License - Feel free to use and modify!
 
-## 🤝 Contributing
 
-Contributions are welcome! Please open an issue or submit a pull request.
 
----
-
-**Built with ❤️ using Google Gemini AI**
